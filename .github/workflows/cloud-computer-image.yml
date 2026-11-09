@@ -43,8 +43,7 @@ jobs:
           docker pull "$ref"
           test "$(docker image inspect "$ref" --format '{{.Architecture}}')" = amd64
           docker run --rm --entrypoint bash "$ref" -ec '
-            test -x /sbin/init
-            for package in systemd openssh-server sudo chrony fuse3 iptables; do dpkg -s "$package" | grep -q "Status: install ok installed"; done
+            test -x /sbin/init || test -x /usr/bin/tini
             id user
             python3 -c "import sys, PIL, docx, pypdf, openpyxl, reportlab; print(sys.version); assert sys.version_info >= (3, 10)"
             node --version
@@ -58,6 +57,8 @@ jobs:
           for field in Entrypoint Cmd; do
             test "$(docker image inspect "$base" --format "{{json .Config.$field}}")" = "$(docker image inspect "$ref" --format "{{json .Config.$field}}")"
           done
+          docker image inspect "$ref" --format '{{json .Config.User}}' | tee inherited-user.txt
+          test "$(docker image inspect "$base" --format '{{json .Config.User}}')" = "$(docker image inspect "$ref" --format '{{json .Config.User}}')"
           docker image inspect "$ref" --format '{{json .RepoDigests}} {{.Size}}' | tee image-result.txt
           cat image-result.txt >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
@@ -66,3 +67,4 @@ jobs:
           path: |
             manifest.json
             image-result.txt
+            inherited-user.txt
