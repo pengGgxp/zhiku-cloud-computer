@@ -1,5 +1,4 @@
 FROM fc-e2b-registry.cn-hangzhou.cr.aliyuncs.com/runtime-v2/all-in-one:v0.1.5
-USER root
 RUN apt-get update && apt-get install -y --no-install-recommends \
     bash ca-certificates curl git file findutils coreutils build-essential \
     libreoffice-writer poppler-utils fonts-noto-cjk fontconfig \
