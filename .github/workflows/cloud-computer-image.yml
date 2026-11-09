@@ -22,10 +22,20 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Set image name
         run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/zhiku-cloud-computer" >> "$GITHUB_ENV"
+      - name: Inspect base runtime user
+        shell: bash
+        run: |
+          set -euo pipefail
+          base=fc-e2b-registry.cn-hangzhou.cr.aliyuncs.com/runtime-v2/all-in-one:v0.1.5
+          docker pull "$base"
+          user=$(docker image inspect "$base" --format '{{.Config.User}}')
+          test -n "$user"
+          echo "BASE_USER=$user" >> "$GITHUB_ENV"
       - uses: docker/build-push-action@v6
         with:
           context: .
           file: Dockerfile
+          build-args: BASE_USER=${{ env.BASE_USER }}
           platforms: linux/amd64
           provenance: false
           sbom: false
