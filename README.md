@@ -8,8 +8,15 @@ cn-hangzhou; publication does not certify successful cloud startup.
 Publish a linux/amd64 Docker schema2 image to GHCR and verify installed tools.
 Do not change production templates or create paid cloud instances in this workflow.
 
-Includes Python 3.12, Node.js, Pillow, python-docx, pypdf, openpyxl, ReportLab,
-LibreOffice Writer, Poppler, Chinese fonts and required init/SSH/FUSE packages.
+Based on the currently deployed Alibaba image
+`fc-e2b-registry.cn-hangzhou.cr.aliyuncs.com/runtime-v2/all-in-one:v0.1.5`.
+Preserves its inherited entrypoint, command, existing user and sandbox runtime.
+Adds Pillow, python-docx, pypdf, openpyxl, ReportLab, LibreOffice Writer, Poppler
+and Chinese fonts; uses the base image's Python and Node.js rather than replacing
+them. Build verification checks Python compatibility and inherited startup settings.
+
+This revision only changes the image. The previous template build timeout is
+not diagnosed here, and publishing does not replace the online template.
 
 Images: ghcr.io/pengggxp/zhiku-cloud-computer, immutable sha tags and latest.
 Use the verified digest for templates. Registry authentication for Alibaba must

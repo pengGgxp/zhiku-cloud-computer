@@ -45,13 +45,19 @@ jobs:
           docker run --rm --entrypoint bash "$ref" -ec '
             test -x /sbin/init
             for package in systemd openssh-server sudo chrony fuse3 iptables; do dpkg -s "$package" | grep -q "Status: install ok installed"; done
-            python -c "import sys, PIL, docx, pypdf, openpyxl, reportlab; assert sys.version_info[:2] == (3, 12)"
+            id user
+            python3 -c "import sys, PIL, docx, pypdf, openpyxl, reportlab; print(sys.version); assert sys.version_info >= (3, 10)"
             node --version
             npm --version
             libreoffice --version
             pdftoppm -v
             fc-match :lang=zh
           '
+          docker pull fc-e2b-registry.cn-hangzhou.cr.aliyuncs.com/runtime-v2/all-in-one:v0.1.5
+          base=fc-e2b-registry.cn-hangzhou.cr.aliyuncs.com/runtime-v2/all-in-one:v0.1.5
+          for field in Entrypoint Cmd; do
+            test "$(docker image inspect "$base" --format "{{json .Config.$field}}")" = "$(docker image inspect "$ref" --format "{{json .Config.$field}}")"
+          done
           docker image inspect "$ref" --format '{{json .RepoDigests}} {{.Size}}' | tee image-result.txt
           cat image-result.txt >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
