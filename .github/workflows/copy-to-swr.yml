@@ -1,0 +1,30 @@
+name: copy-existing-image-to-swr
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  copy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      SOURCE: ghcr.io/pengggxp/zhiku-cloud-computer@sha256:73af216889e100745d6637e98f786a1bfe6f8010328509b3f29d0eab48b5d1b6
+      TARGET: swr.cn-south-1.myhuaweicloud.com/str1ct/zhiku-cloud-computer
+      SWR_USERNAME: ${{ secrets.SWR_USERNAME }}
+      SWR_PASSWORD: ${{ secrets.SWR_PASSWORD }}
+    steps:
+      - name: Install registry client
+        run: sudo apt-get update && sudo apt-get install -y skopeo
+      - name: Copy and verify immutable image
+        shell: bash
+        run: |
+          set -euo pipefail
+          authfile="$RUNNER_TEMP/swr-auth.json"
+          trap 'rm -f "$authfile"' EXIT
+          printf '%s' "$SWR_PASSWORD" | skopeo login --authfile "$authfile" --username "$SWR_USERNAME" --password-stdin "${TARGET%%/*}"
+          skopeo inspect --raw "docker://$SOURCE" > source-manifest.json
+          skopeo copy --preserve-digests --authfile "$authfile" "docker://$SOURCE" "docker://$TARGET:allinone-e8d9d3e"
+          skopeo inspect --authfile "$authfile" --raw "docker://$TARGET:allinone-e8d9d3e" > target-manifest.json
+          cmp source-manifest.json target-manifest.json
+          test "$(jq -r .mediaType target-manifest.json)" = application/vnd.docker.distribution.manifest.v2+json
+          skopeo inspect --authfile "$authfile" "docker://$TARGET:allinone-e8d9d3e" | jq '{Name,Digest,Architecture,Os}'
